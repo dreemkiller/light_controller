@@ -3,6 +3,8 @@ package main
 import "os"
 import "fmt"
 import "io"
+import "time"
+import "github.com/stianeikeland/go-rpio"
 
 type Program struct {
 	moments []moment
@@ -45,4 +47,22 @@ func (p *Program) Load(filename string) error {
 	}
 	fmt.Printf("p:%v\n", p)
 	return nil
+}
+
+func (p *Program) Run(pins []rpio.Pin) {
+	pause := time.Millisecond * time.Duration(p.timeslice_ms)
+	for _, this_pin := range pins {
+		this_pin.Low()
+	}
+	for moment_count, moment := range p.moments {
+		fmt.Printf("slice:%v\n", moment_count)
+		for pin_num, value := range moment.lights {
+			if (value) {
+				pins[pin_num].High()
+			} else {
+				pins[pin_num].Low()
+			}
+		}
+		time.Sleep(pause)
+	}
 }

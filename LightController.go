@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
     "github.com/stianeikeland/go-rpio"
 )
 
@@ -36,21 +35,6 @@ func main() {
 	}
 
 	for {
-		this_program := programs[1]
-		pause := time.Millisecond * time.Duration(this_program.timeslice_ms)
-		for _, this_pin := range pins {
-			this_pin.Low()
-		}
-		for moment_count, moment := range this_program.moments {
-			fmt.Printf("slice:%v\n", moment_count)
-			for pin_num, value := range moment.lights {
-				if (value) {
-					pins[pin_num].High()
-				} else {
-					pins[pin_num].Low()
-				}
-			}
-			time.Sleep(pause)
-		}
+		programs[1].Run(pins[:])
 	}
 }
