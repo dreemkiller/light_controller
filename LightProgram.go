@@ -17,6 +17,10 @@ func (p *Program) Load(filename string) error {
 	fd, err := os.Open(filename); if err != nil {
 		return err
 	}
+	if _, err := fmt.Fscanf(fd, "%d\n", &p.timeslice_ms); err != nil {
+		fmt.Printf("Failed to read timeslice from program file:%v\n", err)
+		return err
+	}
 	for {
 		var lights [8]int
 		_, err := fmt.Fscanf(fd, "%1d%1d%1d%1d%1d%1d%1d%1d\n", &lights[0],
