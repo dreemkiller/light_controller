@@ -8,12 +8,15 @@ import (
 
 func main() {
 	fmt.Printf("Hello, world\n")
-	var programs [1]Program
+	var programs [2]Program
 	if err := programs[0].Load("program0"); err != nil {
 		fmt.Printf("Failed to load:%v\n", err)
 		return
 	}
-	fmt.Printf("programs[0]:%v\n", programs[0])
+	if err := programs[1].Load("program1"); err != nil {
+		fmt.Printf("Failed to load:%v\n", err)
+		return
+	}
 
 	if err := rpio.Open(); err != nil {
 		fmt.Printf("rpio.Open() failed:%v\n", err)
@@ -33,11 +36,12 @@ func main() {
 	}
 
 	for {
-		pause := time.Millisecond * time.Duration(programs[0].timeslice_ms)
+		this_program := programs[1]
+		pause := time.Millisecond * time.Duration(this_program.timeslice_ms)
 		for _, this_pin := range pins {
 			this_pin.Low()
 		}
-		for moment_count, moment := range programs[0].moments {
+		for moment_count, moment := range this_program.moments {
 			fmt.Printf("slice:%v\n", moment_count)
 			for pin_num, value := range moment.lights {
 				if (value) {
