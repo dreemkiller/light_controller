@@ -48,7 +48,11 @@ func main() {
 	go GetProgram()
 
 	for {
-		programs[current_program_num].Run(pins[:])
+		var temp_program_num int
+		mutex.Lock()
+		temp_program_num = current_program_num
+		mutex.Unlock()
+		programs[temp_program_num].Run(pins[:])
 	}
 }
 
@@ -56,10 +60,12 @@ type ProgramNumber struct {
 	Number int `json:"Number"`
 }
 
+const fetch_delay = 5
+
 func GetProgram() {
 	for {
 		var received_program_num ProgramNumber
-		time.Sleep(time.Second * time.Duration(5))
+		time.Sleep(time.Second * time.Duration(fetch_delay))
 		resp, err := http.Get(server_url); if err != nil {
 			fmt.Printf("Failed to get:%v\n", err)
 			continue
