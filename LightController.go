@@ -1,13 +1,24 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"sync"
+	"time"
     "github.com/stianeikeland/go-rpio"
 )
 
+const server_url = "http://192.168.0.110:8000/CurrentProgram"
+
+var current_program_num int
+
+var mutex *sync.Mutex
+var programs [2]Program
+
 func main() {
 	fmt.Printf("Hello, world\n")
-	var programs [2]Program
+	mutex = &sync.Mutex{}
 	if err := programs[0].Load("program0"); err != nil {
 		fmt.Printf("Failed to load:%v\n", err)
 		return
@@ -34,7 +45,33 @@ func main() {
 		pin.Output()
 	}
 
+	go GetProgram()
+
 	for {
-		programs[1].Run(pins[:])
+		programs[current_program_num].Run(pins[:])
+	}
+}
+
+type ProgramNumber struct {
+	Number int `json:"Number"`
+}
+
+func GetProgram() {
+	for {
+		var received_program_num ProgramNumber
+		time.Sleep(time.Second * time.Duration(5))
+		resp, err := http.Get(server_url); if err != nil {
+			fmt.Printf("Failed to get:%v\n", err)
+			continue
+		}
+		json.NewDecoder(resp.Body).Decode(&received_program_num)
+		resp.Body.Close()
+		fmt.Printf("received_program_num:%v\n", received_program_num.Number)
+		if (received_program_num.Number != current_program_num &&
+		    received_program_num.Number < len(programs)) {
+			mutex.Lock()
+			current_program_num = received_program_num.Number
+			mutex.Unlock()
+		}
 	}
 }
