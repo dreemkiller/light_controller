@@ -45,7 +45,6 @@ func (p *Program) Load(filename string) error {
 		}
 		p.moments = append(p.moments, this_moment)
 	}
-	fmt.Printf("p:%v\n", p)
 	return nil
 }
 
