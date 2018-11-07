@@ -51,15 +51,15 @@ func (p *Program) Load(filename string) error {
 func (p *Program) Run(pins []rpio.Pin) {
 	pause := time.Millisecond * time.Duration(p.timeslice_ms)
 	for _, this_pin := range pins {
-		this_pin.Low()
+		this_pin.High()
 	}
 	for moment_count, moment := range p.moments {
 		fmt.Printf("slice:%v\n", moment_count)
 		for pin_num, value := range moment.lights {
 			if (value) {
-				pins[pin_num].High()
-			} else {
 				pins[pin_num].Low()
+			} else {
+				pins[pin_num].High()
 			}
 		}
 		time.Sleep(pause)
