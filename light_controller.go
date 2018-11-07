@@ -6,18 +6,47 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"os"
     "github.com/stianeikeland/go-rpio"
 )
 
-const server_url = "http://192.168.0.110:8000/CurrentProgram"
+type Config struct {
+	Port int	`json:"port"`
+	Server string	`json:"server"`
+}
+
+func readConfig() error {
+	jsonFile, err := os.Open("./config.json")
+	if err != nil {
+		fmt.Printf("Failed to open config file:%v\n", err)
+		return err
+	}
+	defer jsonFile.Close()
+	jsonParser := json.NewDecoder(jsonFile)
+	err = jsonParser.Decode(&config)
+	if err != nil {
+		fmt.Printf("Failed to decode json:%v\n", err)
+		return err
+	}
+	return nil
+}
 
 var current_program_num int
 
 var mutex *sync.Mutex
 var programs [2]Program
 
+var config Config
+
 func main() {
 	fmt.Printf("Hello, world\n")
+	err := readConfig()	
+	if err != nil {
+		fmt.Printf("readConfig failed:%v\n", err)
+		return
+	}
+	fmt.Printf("config.Server:%v\n", config.Server)
+	fmt.Printf("config.Port:%v\n", config.Port)
 	mutex = &sync.Mutex{}
 	if err := programs[0].Load("program0"); err != nil {
 		fmt.Printf("Failed to load:%v\n", err)
@@ -63,6 +92,8 @@ type ProgramNumber struct {
 const fetch_delay = 5
 
 func GetProgram() {
+	server_url := fmt.Sprintf("http://%s:%d/CurrentProgram", config.Server, config.Port)
+	fmt.Printf("server_url:%v\n", server_url)
 	for {
 		var received_program_num ProgramNumber
 		time.Sleep(time.Second * time.Duration(fetch_delay))
