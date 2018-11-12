@@ -1,18 +1,22 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
 	"os"
+	"io/ioutil"
     "github.com/stianeikeland/go-rpio"
 )
 
 type Config struct {
 	Port int	`json:"port"`
 	Server string	`json:"server"`
+	Cert_file string `json:"cert_file"`
 }
 
 func readConfig() error {
@@ -77,11 +81,11 @@ func main() {
 	go GetProgram()
 
 	for {
-		var temp_program_num int
+		//var temp_program_num int
 		mutex.Lock()
-		temp_program_num = current_program_num
+		//temp_program_num = current_program_num
 		mutex.Unlock()
-		programs[temp_program_num].Run(pins[:])
+		//programs[temp_program_num].Run(pins[:])
 	}
 }
 
@@ -92,15 +96,32 @@ type ProgramNumber struct {
 const fetch_delay = 5
 
 func GetProgram() {
-	server_url := fmt.Sprintf("http://%s:%d/CurrentProgram", config.Server, config.Port)
+	server_url := fmt.Sprintf("https://%s:%d/CurrentProgram", config.Server, config.Port)
 	fmt.Printf("server_url:%v\n", server_url)
+	caCert, err := ioutil.ReadFile(config.Cert_file)
+	if err != nil {
+		fmt.Printf("Failed to read server crt:%v\n", err)
+		return		
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+	client := &http.Client {
+		Transport: &http.Transport {
+			TLSClientConfig: &tls.Config {
+				RootCAs: caCertPool,
+			},
+		},
+	}
 	for {
 		var received_program_num ProgramNumber
 		time.Sleep(time.Second * time.Duration(fetch_delay))
-		resp, err := http.Get(server_url); if err != nil {
+		fmt.Printf("Attempting to get from %v\n", server_url)
+		resp, err := client.Get(server_url)
+		if err != nil {
 			fmt.Printf("Failed to get:%v\n", err)
 			continue
 		}
+		fmt.Printf("Successfully gotted\n")
 		json.NewDecoder(resp.Body).Decode(&received_program_num)
 		resp.Body.Close()
 		fmt.Printf("received_program_num:%v\n", received_program_num.Number)
