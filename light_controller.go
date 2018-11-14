@@ -81,11 +81,11 @@ func main() {
 	go GetProgram()
 
 	for {
-		//var temp_program_num int
+		var temp_program_num int
 		mutex.Lock()
-		//temp_program_num = current_program_num
+		temp_program_num = current_program_num
 		mutex.Unlock()
-		//programs[temp_program_num].Run(pins[:])
+		programs[temp_program_num].Run(pins[:])
 	}
 }
 
@@ -115,13 +115,11 @@ func GetProgram() {
 	for {
 		var received_program_num ProgramNumber
 		time.Sleep(time.Second * time.Duration(fetch_delay))
-		fmt.Printf("Attempting to get from %v\n", server_url)
 		resp, err := client.Get(server_url)
 		if err != nil {
 			fmt.Printf("Failed to get:%v\n", err)
 			continue
 		}
-		fmt.Printf("Successfully gotted\n")
 		json.NewDecoder(resp.Body).Decode(&received_program_num)
 		resp.Body.Close()
 		fmt.Printf("received_program_num:%v\n", received_program_num.Number)
