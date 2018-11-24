@@ -38,7 +38,7 @@ func readConfig() error {
 var current_program_num int
 
 var mutex *sync.Mutex
-var programs [3]Program
+var programs [4]Program
 
 var config Config
 
@@ -62,6 +62,10 @@ func main() {
 	}
 	if err := programs[2].Load("program2"); err != nil {
 		fmt.Printf("Failed to load program 2:%v\n", err)
+		return
+	}
+	if err := programs[3].Load("program3"); err != nil {
+		fmt.Printf("Failed to load program 3:%v\n", err)
 		return
 	}
 
